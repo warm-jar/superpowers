@@ -11,7 +11,7 @@ If this sounds like someone you know, definitely send them our way.
 
 ## Quickstart
 
-Give your agent Superpowers: [Claude Code](#claude-code), [Antigravity](#antigravity), [Codex App](#codex-app), [Codex CLI](#codex-cli), [Cursor](#cursor), [Factory Droid](#factory-droid), [GitHub Copilot CLI](#github-copilot-cli), [Kimi Code](#kimi-code), [OpenCode](#opencode), [Pi](#pi).
+Give your agent Superpowers: [Claude Code](#claude-code), [Antigravity](#antigravity), [Codex App](#codex-app), [Codex CLI](#codex-cli), [Cursor](#cursor), [Factory Droid](#factory-droid), [GitHub Copilot CLI](#github-copilot-cli), [Kimi Code](#kimi-code), [OMP (Oh My Pi)](#omp-oh-my-pi), [OpenCode](#opencode), [Pi](#pi).
 
 ## How it works
 
@@ -168,6 +168,24 @@ already use it in another harness.
   ```
 
 - Detailed docs: [docs/README.opencode.md](docs/README.opencode.md)
+
+### OMP (Oh My Pi)
+
+Install Superpowers as an OMP plugin from this repository:
+
+```bash
+omp plugin install git+https://github.com/obra/superpowers.git
+```
+
+OMP loads the Superpowers skills automatically from the plugin's `skills/` directory and injects the `using-superpowers` bootstrap at session start and again after compaction. OMP has native skills, so no compatibility `Skill` tool is required. OMP ships native `task` and `todo` tools for subagent dispatch and task tracking.
+
+For local development, point OMP at this checkout via the `extensions` setting:
+
+```json
+{ "extensions": ["/path/to/superpowers"] }
+```
+
+- Detailed docs: [docs/README.omp.md](docs/README.omp.md)
 
 ### Pi
 
