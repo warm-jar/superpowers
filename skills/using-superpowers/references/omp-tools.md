@@ -40,7 +40,7 @@ The SDD skill's Model Selection section tells the controller to pick a cheap, st
 
 The SDD dispatch templates (`Subagent (general-purpose):` with `model: [MODEL]`) become `task` calls where `agent` carries the tier. Do **not** omit `agent` — an omitted `agent` defaults to `task` (`pi/task`), which silently defeats SDD's Model Selection just as an omitted `model` would on any harness.
 
-For per-call overrides that don't match the agent's default tier, pass `model` explicitly: `task(prompt, { agent: "task", model: "pi/smol" })` runs the general-purpose agent on the smol model. Config-level `task.agentModelOverrides` can statically bind a specific model to an agent type for all dispatches. Per-call `model` overrides via the eval `agent(prompt, { model })` helper force LSP off and have no IRC revival.
+`/model`'s Task/Subtask role setting changes what `pi/task` resolves to, so `agent: "task"` will use that configured model. It does not change `agent: "sonic"` (`pi/smol`) or `agent: "reviewer"`/`agent: "plan"` (`pi/slow`). For all `task` tool calls of one agent type, config-level `task.agentModelOverrides` has the highest priority and can statically bind that agent name (for example `task` or `sonic`) to a specific model. The `task` tool itself has no per-call `model` parameter; per-call model overrides are only available through the eval `agent(prompt, { model })` helper, which forces LSP off and has no IRC revival.
 
 ## Task lists
 
