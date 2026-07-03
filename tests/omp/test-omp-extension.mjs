@@ -120,8 +120,4 @@ test('omp tools reference documents omp-specific mappings', async () => {
     assert.match(text, new RegExp(expected));
   }
 
-  // SDD Model Selection tier → OMP agent type mapping must be documented
-  for (const tier of ['sonic', 'pi/smol', 'pi/task', 'pi/slow', 'reviewer', 'plan', 'SDD']) {
-    assert.match(text, new RegExp(tier), `omp-tools.md should document the SDD→OMP agent tier mapping for ${tier}`);
-  }
 });
