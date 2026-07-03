@@ -258,7 +258,9 @@ mutating the message array in code.
 
 - Reference: `.opencode/plugins/superpowers.js` (JavaScript) and
   `.pi/extensions/superpowers.ts` (TypeScript). pi is the closest reference for
-  any harness that has **no native skill tool**.
+  any harness that has **no native skill tool**. OMP (`.omp/extensions/superpowers-bootstrap.ts`)
+  is the closest reference for a pi-derived harness that **auto-discovers skills
+  from the plugin's `skills/` directory** — no `resources_discover` handler needed.
 
 ### Shape C — Instructions-file
 
@@ -290,7 +292,7 @@ part of the installed extension** — never substitute "edit the user's global
 | If the harness… | Use shape | Copy from |
 |---|---|---|
 | runs a shell command at session start and reads its stdout | A (shell-hook) | Cursor (`hooks/session-start` + `hooks/hooks-cursor.json` + `.cursor-plugin/`) |
-| is a JS/TS plugin host with session/message lifecycle callbacks | B (in-process) | OpenCode (`.opencode/`) — or pi (`.pi/`) if it has no native skill tool |
+| is a JS/TS plugin host with session/message lifecycle callbacks | B (in-process) | OpenCode (`.opencode/`) — or pi (`.pi/`) if it has no native skill tool; OMP (`.omp/`) if it auto-discovers skills from the plugin package |
 | ships an extension-declared context file it always loads | C (instructions-file) | Gemini (`gemini-extension.json` + `GEMINI.md` + `references/gemini-tools.md`) |
 | has a plugin install command and a manifest `contextFileName` (or equivalent) the installer keeps | C via the plugin installer | Antigravity (`.antigravity-plugin/` — `agy plugin install` ships a generated context file; verify the installer preserves it — Part 6) |
 
@@ -320,7 +322,10 @@ ones in spirit:
   whatever package metadata it needs to be discovered. The committed package
   metadata is the **repo-root `package.json`**: `main` points at the OpenCode
   plugin, the `pi` field (`pi.extensions`, `pi.skills`) plus the `pi-package`
-  keyword declare the pi extension. Per-harness local manifests and lockfiles are
+  keyword declare the pi extension; the `omp` field (`omp.extensions`,
+  `omp.skills`) declares the OMP extension. A pi-derived harness that reads
+  `pkg.omp ?? pkg.pi` will prefer the `omp` field when both are present, so
+  add both rather than overloading `pi` alone. Per-harness local manifests and lockfiles are
   kept out of git — `.opencode/.gitignore` excludes `node_modules`,
   `package.json`, and lockfiles. Do the same for your harness's *local* install
   artifacts so they don't pollute the repo — but never gitignore the repo-root
@@ -517,13 +522,15 @@ honors the rule rather than breaking it. Distinguish three cases:
 
 1. **Native `Skill`-style tool** (Claude Code, Copilot CLI, Gemini's
    `activate_skill`): point the mapping at that tool.
-2. **Native skill *discovery* but no `Skill` tool** (pi, Antigravity): the harness
+2. **Native skill *discovery* but no `Skill` tool** (pi, OMP, Antigravity): the harness
    can find and list skills, but the model can't call a tool to load one. Get the
    skills installed where the harness scans (pi registers via `resources_discover`
-   → `skillPaths`; OpenCode via its `config` hook; `agy plugin install` copies
-   them in), and tell the model to load a skill by **reading its `SKILL.md` with
-   the file-read tool when the skill applies** — the sanctioned mechanism here,
-   the way `references/pi-tools.md` states it.
+   → `skillPaths`; OMP auto-discovers from the plugin package's `skills/` directory
+   via its `omp-plugins` provider — no `resources_discover` handler needed; OpenCode
+   via its `config` hook; `agy plugin install` copies them in), and tell the model
+   to load a skill by **reading its `SKILL.md` with the file-read tool when the
+   skill applies** — the sanctioned mechanism here, the way `references/pi-tools.md`
+   and `references/omp-tools.md` state it.
 
    **For the bootstrap itself, prefer a declared context file (Part 6).** If the
    harness has a `contextFileName`-style manifest field — as Antigravity does —
@@ -678,6 +685,7 @@ it. Distribution differs per harness ecosystem — find yours:
 | External marketplace fork, synced by script | Codex | `scripts/sync-to-codex-plugin.sh` rsyncs the tracked plugin files into a separate fork repo and opens a PR. Read its include/exclude list so you ship the right tree (it deliberately drops repo-internal dirs and other harnesses' dotdirs). |
 | Git-URL extension install | Gemini, Kimi Code, OpenCode | Users install from a git URL (`gemini extensions install …`; Kimi Code `/plugins install …`; an `opencode.json` `plugin` array entry). Document the exact command. |
 | Package-manifest fields | pi | Declared through fields in the repo-root `package.json`; users install via the harness's package command. |
+| Package-manifest fields (omp) | OMP (Oh My Pi) | Declared through the `omp` field in the repo-root `package.json`; users install via `omp plugin install` or the `extensions` setting. The `omp-plugins` provider auto-discovers `skills/`. |
 | Local installer (plugin install) | Antigravity (`agy`) | A small `install.sh` that runs the harness's own `agy plugin install` against a staging dir holding the manifest, the skills, and a generated `contextFileName` context file (the bootstrap). Everything arrives through the install mechanism — *not* by editing the user's config (see below). |
 
 Then:
@@ -792,6 +800,7 @@ Use this as the live index; when in doubt, read the files, not this table.
 | Kimi Code | `.kimi-plugin/plugin.json` | manifest `sessionStart.skill` loads `using-superpowers` | inline `skillInstructions` in manifest | `tests/kimi/` | marketplace or `/plugins install` GitHub URL |
 | OpenCode | `.opencode/plugins/superpowers.js` (declared via root `package.json` `main`) | in-process: `config` hook registers skills dir; `experimental.chat.messages.transform` injects user message | inline in `superpowers.js` | `tests/opencode/` | `opencode.json` plugin git URL |
 | pi | `.pi/extensions/superpowers.ts` | in-process: `resources_discover` registers skills; `context` event injects user message; lifecycle-flag + compaction-aware | `piToolMapping()` inline **and** `references/pi-tools.md` | `tests/pi/` | repo-root `package.json` fields |
+| OMP (Oh My Pi) | `.omp/extensions/superpowers-bootstrap.ts` (declared via root `package.json` `omp.extensions`) | in-process: `omp-plugins` provider auto-discovers `skills/`; `context` event injects user message; lifecycle-flag + compaction-aware | `ompToolMapping()` inline **and** `references/omp-tools.md` | `tests/omp/` | `omp plugin install` git URL |
 
 ## Appendix B — Gotchas that have bitten porters
 
@@ -817,6 +826,17 @@ Use this as the live index; when in doubt, read the files, not this table.
   reads `SKILL.md` on demand. Don't assume a `skillPaths` equivalent exists.
 - **Mapping in two places.** For in-process plugins the mapping may live both
   inline and in a `references/` file (pi). Update both.
+- **Pi-derived harness with auto-skill-discovery.** OMP is pi-derived and
+  auto-discovers skills from the plugin package's `skills/` directory via its
+  `omp-plugins` provider — so the extension does **not** register a
+  `resources_discover` handler. Copying pi's `resources_discover` → `skillPaths`
+  registration onto OMP is harmless but redundant; the real wiring is the
+  `omp.extensions` manifest field pointing at the bootstrap module. Check whether
+  your pi-derived harness auto-scans the package before adding a handler.
+- **`omp` vs `pi` manifest precedence.** A pi-derived harness that reads
+  `pkg.omp ?? pkg.pi` prefers the `omp` field when both exist. Declare both
+  fields so the same `package.json` serves pi and the derived harness without
+  one shadowing the other.
 - **The "never read skill files" line.** It means "don't bypass your platform's
   skill-loading mechanism," not "never use file-read." On a no-skill-tool harness
   that mechanism *is* reading `SKILL.md` — say so explicitly in the mapping

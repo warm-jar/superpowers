@@ -18,6 +18,7 @@ Superpowers is a complete software development methodology for your coding agent
   - [GitHub Copilot CLI](#github-copilot-cli)
   - [Grok Build CLI](#grok-build-cli)
   - [Kimi Code](#kimi-code)
+  - [OMP (Oh My Pi)](#omp-oh-my-pi)
   - [OpenCode](#opencode)
   - [Pi](#pi)
   - [Hermes Agent](#hermes-agent)
@@ -229,6 +230,24 @@ already use it in another harness.
   ```
 
 - Detailed docs: [docs/README.opencode.md](docs/README.opencode.md)
+
+### OMP (Oh My Pi)
+
+Install Superpowers as an OMP plugin from this repository:
+
+```bash
+omp plugin install git+https://github.com/obra/superpowers.git
+```
+
+OMP loads the Superpowers skills automatically from the plugin's `skills/` directory and injects the `using-superpowers` bootstrap at session start and again after compaction. OMP has native skills, so no compatibility `Skill` tool is required. OMP ships native `task` and `todo` tools for subagent dispatch and task tracking.
+
+For local development, point OMP at this checkout via the `extensions` setting:
+
+```json
+{ "extensions": ["/path/to/superpowers"] }
+```
+
+- Detailed docs: [docs/README.omp.md](docs/README.omp.md)
 
 ### Pi
 

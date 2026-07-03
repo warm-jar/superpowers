@@ -19,5 +19,13 @@
     "skills": [
       "./skills"
     ]
+  },
+  "omp": {
+    "extensions": [
+      "./.omp/extensions/superpowers-bootstrap.ts"
+    ],
+    "skills": [
+      "./skills"
+    ]
   }
 }
